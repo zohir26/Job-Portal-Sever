@@ -2,9 +2,11 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+// JWT token and cookie parser
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cookieParser= require('cookie-parser')
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -15,6 +17,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+// set as middleware
 app.use(cookieParser());
 
 const logger= (req,res, next)=>{
@@ -71,6 +74,15 @@ async function run() {
       .send({ success:true });
     });
 
+    // Clear the token after logout
+    app.post ('/logout', (req,res)=>{
+      res.clearCookie('token', {
+        httpOnly:true,
+        secure:false
+      })
+      .send({success:true})
+    })
+
     app.get('/jobs', logger, verifyToken, async (req, res) => {
       const email = req.query.email;
       let query = {};
@@ -96,7 +108,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/job-applications',verifyToken, async (req, res) => {
+    app.post('/job-applications', async (req, res) => {
       const application = req.body;
       const result = await jobApplicationCollection.insertOne(application);
 
@@ -120,9 +132,13 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/job-applications', async (req, res) => {
+    app.get('/job-applications',verifyToken, async (req, res) => {
       const email = req.query.email;
       const query = { applicant_email: email };
+// a person can only take his information with his email
+    if(req.user.email !== req.query.email){
+      return res.status(403).send({message:'forbidden access'})
+    }
 
       console.log('cookies', req.cookies)
       try {
