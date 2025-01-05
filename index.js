@@ -89,8 +89,20 @@ async function run() {
     })
 
     app.get('/jobs', async (req, res) => {
-      const query = {}; // Empty query to fetch all jobs
-      const cursor = jobsCollection.find(query);
+       // Empty query to fetch all jobs
+      const sort = req.query?.sortBySalary;
+      const query = {};
+      // console.log(req.query)
+      let sortQuery = {};
+
+      if(sort  == "true"){
+        // if sort is true then the sortQuery will run
+        // the query is come from client as string.
+        sortQuery = {"salaryRange.min": -1}
+       
+      }
+
+      const cursor = jobsCollection.find(query).sort(sortQuery);
       const result = await cursor.toArray();
       res.send(result);
     });
