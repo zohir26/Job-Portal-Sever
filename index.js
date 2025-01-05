@@ -91,6 +91,7 @@ async function run() {
     app.get('/jobs', async (req, res) => {
        // Empty query to fetch all jobs
       const sort = req.query?.sortBySalary;
+      const search = req.query?.search;
       const query = {};
       // console.log(req.query)
       let sortQuery = {};
@@ -102,6 +103,10 @@ async function run() {
        
       }
 
+      if(search){
+        query.location , query.title = {$regex: search, $options: "i" }
+      }
+      console.log(query)
       const cursor = jobsCollection.find(query).sort(sortQuery);
       const result = await cursor.toArray();
       res.send(result);
