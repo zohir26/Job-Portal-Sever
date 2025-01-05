@@ -88,25 +88,78 @@ async function run() {
         .send({ success: true })
     })
 
+    // app.get('/jobs', async (req, res) => {
+    //    // Empty query to fetch all jobs
+    //   const sort = req.query?.sortBySalary;
+    //   const search = req.query?.search;
+    //   console.log(req.query)
+    //   const min = parseInt(req.query?.minSalary);
+    //   const max = parseInt(req.query?.maxSalary);
+    //   const query = {};
+    //   // console.log(req.query)
+    //   let sortQuery = {};
+
+
+      
+    //   if(search){
+    //     query.$or = [
+    //       {location: {$regex:search, $options: "i"}},
+    //       {title:{$regex:search, $options:"i"}}
+    //     ]
+    //   }
+
+    //   query["salaryRange.min"] = {$gte: min};
+    //   query["salaryRange.max"] = {lte : max};
+    //   // if(search){
+    //   //   query.location , query.title = {$regex: search, $options: "i" }
+    //   // }
+
+    //   // if(min && max) {
+    //   //   queryAll = {
+    //   //     ...query,
+    //   //     "salaryRange.min":{$gte:min},
+    //   //     "salaryRange.max":{$lte:max},
+    //   //   }
+    //   // }
+    //   if(sort  == "true"){
+    //     // if sort is true then the sortQuery will run
+    //     // the query is come from client as string.
+    //     sortQuery = {"salaryRange.min": -1}
+       
+    //   }
+
+    //   // console.log(query)
+    //   const cursor = jobsCollection.find(query,queryAll).sort(sortQuery);
+    //   const result = await cursor.toArray();
+    //   res.send(result);
+    // });
+    
     app.get('/jobs', async (req, res) => {
-       // Empty query to fetch all jobs
       const sort = req.query?.sortBySalary;
       const search = req.query?.search;
-      const query = {};
-      // console.log(req.query)
+      const min = parseInt(req.query?.minSalary) || 0;
+      const max = parseInt(req.query?.maxSalary) || Infinity;
+    
+      let query = {};
+    
+      // Adding search functionality
+      if (search) {
+        query.$or = [
+          { location: { $regex: search, $options: "i" } },
+          { title: { $regex: search, $options: "i" } }
+        ];
+      }
+    
+      // Adding salary range filter
+      query["salaryRange.min"] = { $gte: min };
+      query["salaryRange.max"] = { $lte: max };
+    
+      // Adding sorting functionality
       let sortQuery = {};
-
-      if(sort  == "true"){
-        // if sort is true then the sortQuery will run
-        // the query is come from client as string.
-        sortQuery = {"salaryRange.min": -1}
-       
+      if (sort === "true") {
+        sortQuery = { "salaryRange.min": -1 };
       }
-
-      if(search){
-        query.location , query.title = {$regex: search, $options: "i" }
-      }
-      console.log(query)
+    
       const cursor = jobsCollection.find(query).sort(sortQuery);
       const result = await cursor.toArray();
       res.send(result);
